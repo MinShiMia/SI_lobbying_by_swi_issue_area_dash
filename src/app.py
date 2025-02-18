@@ -71,7 +71,7 @@ app.title = "LDA Frequency and Expenses Dashboard"
 app.layout = html.Div([
 # App Title
     html.H1(
-        "LDA Filing Frequency and Lobbying Expenses Dashboard",
+        "LDA Filing Frequency and Lobbying Expenses by SWI Issue Area Dashboard",
         style={
             'text-align': 'center',
             'font-size': '22px',
@@ -81,6 +81,7 @@ app.layout = html.Div([
     ),
     # Filter Section at the Top
     html.Div([
+        # Select Year filter
         html.Div([
             html.Label("Select Year:", style={'font-size': '14px', 'font-weight': 'bold'}),
             dcc.Dropdown(
@@ -89,8 +90,9 @@ app.layout = html.Div([
                 multi=True,
                 placeholder="Select Year(s)"
             ),
-        ], style={'width': '48%', 'display': 'inline-block', 'padding-right': '10px'}),
+        ], style={'width': '32%', 'display': 'inline-block', 'padding-right': '10px'}),
 
+        # Select Quarter filter
         html.Div([
             html.Label("Select Quarter:", style={'font-size': '14px', 'font-weight': 'bold'}),
             dcc.Dropdown(
@@ -99,7 +101,21 @@ app.layout = html.Div([
                 multi=True,
                 placeholder="Select Quarter(s)"
             ),
-        ], style={'width': '48%', 'display': 'inline-block'})
+        ], style={'width': '32%', 'display': 'inline-block', 'padding-right': '10px'}),
+
+        # Sort By Dropdown filter
+            html.Div([
+                html.Label("Sort By:", style={'font-size': '14px', 'font-weight': 'bold'}),
+                dcc.Dropdown(
+                    id='order-dropdown',
+                    options=[
+                        {'label': 'Total Frequency', 'value': 'Total Frequency'},
+                        {'label': 'Total Expenses', 'value': 'Total Expenses'}
+                    ],
+                    value='Total Frequency',  # Default sorting
+                    clearable=False
+                ),
+            ], style={'width': '32%', 'display': 'inline-block'})
     ], style={'width': '100%', 'display': 'flex', 'justify-content': 'space-between', 'margin-bottom': '0px'}),
 
     # Dual-Axis Bar Chart
@@ -131,14 +147,15 @@ app.layout = html.Div([
     Output('dynamic-title', 'children'),
     [Input('dual-axis-bar-chart', 'clickData')]
 )
+
 def update_dynamic_title(clickData):
     # Default issue's external link
     default_swi_issue_id = f"https://app.legis1.com/issues/detail?id=67#summary"
 
     if not clickData:
         return html.Span([
-            f"LDA filing frequency and lobbying expenses for default issue: Affordable Care Act (ACA), ",
-            html.A("view detailed issue summary", href=default_swi_issue_id, target="_blank",
+            "LDA filing frequency and lobbying expenses for default issue: ",
+            html.A("Affordable Care Act (ACA)", href=default_swi_issue_id, target="_blank",
                    style={'color': 'blue', 'text-decoration': 'underline'}),
             ". Click on another issue's bar to see its trend."
         ])
@@ -154,10 +171,9 @@ def update_dynamic_title(clickData):
 
     # Return the dynamic title with a clickable link
     return html.Span([
-        f"LDA filing frequency and lobbying expenses for selected issue: {selected_issue}, ",
-        html.A("view detailed issue summary", href=external_url, target="_blank",
-               style={'color': 'blue', 'text-decoration': 'underline'}),
-        ". Click on another issue's bar to see its trend."
+        f"LDA filing frequency and lobbying expenses for selected issue: ",
+        html.A(f"{selected_issue}", href=external_url, target="_blank",
+               style={'color': 'blue', 'text-decoration': 'underline'})
     ])
 
 
@@ -165,11 +181,12 @@ def update_dynamic_title(clickData):
 @app.callback(
     Output('dual-axis-bar-chart', 'figure'),
     [Input('year-dropdown', 'value'),
-     Input('quarter-dropdown', 'value')]
+     Input('quarter-dropdown', 'value'),
+     Input('order-dropdown', 'value')]
 )
 
 
-def update_dual_axis_bar_chart(selected_years, selected_quarters):
+def update_dual_axis_bar_chart(selected_years, selected_quarters, selected_order):
     # Filter the data based on the selected years and quarters
     filtered_frequency = df_frequency
     filtered_expenses = df_expenses
@@ -198,6 +215,10 @@ def update_dual_axis_bar_chart(selected_years, selected_quarters):
 
     # Merge the frequency and expenses data for plotting
     merged_data = pd.merge(agg_frequency, agg_expenses, on='issue_name', how='outer').fillna(0)
+
+    # Sort by Total Frequency in descending order
+    if selected_order:
+        merged_data = merged_data.sort_values(by=f'{selected_order}', ascending=False)
 
     # Create the bar chart with two traces (Frequency and Expenses)
     fig = go.Figure()
