@@ -90,7 +90,7 @@ app.layout = html.Div([
                 multi=True,
                 placeholder="Select Year(s)"
             ),
-        ], style={'width': '32%', 'display': 'inline-block', 'padding-right': '10px'}),
+        ], style={'width': '24%', 'display': 'inline-block', 'padding-right': '10px'}),
 
         # Select Quarter filter
         html.Div([
@@ -101,7 +101,7 @@ app.layout = html.Div([
                 multi=True,
                 placeholder="Select Quarter(s)"
             ),
-        ], style={'width': '32%', 'display': 'inline-block', 'padding-right': '10px'}),
+        ], style={'width': '24%', 'display': 'inline-block', 'padding-right': '10px'}),
 
         # Sort By Dropdown filter
             html.Div([
@@ -115,7 +115,18 @@ app.layout = html.Div([
                     value='Total Frequency',  # Default sorting
                     clearable=False
                 ),
-            ], style={'width': '32%', 'display': 'inline-block'})
+            ], style={'width': '24%', 'display': 'inline-block'}),
+
+        # Select Top Issues Dropdown
+        html.Div([
+            html.Label("Top Issues to Show:", style={'font-size': '14px', 'font-weight': 'bold'}),
+            dcc.Dropdown(
+                id='top-issues-dropdown',
+                options=[{'label': f"Top {i}", 'value': i} for i in range(10, 51, 10)],  # 10 to 100, step 10
+                value=50,  # Default value
+                clearable=False
+            ),
+        ], style={'width': '24%', 'display': 'inline-block'})
     ], style={'width': '100%', 'display': 'flex', 'justify-content': 'space-between', 'margin-bottom': '0px'}),
 
     # Dual-Axis Bar Chart
@@ -182,11 +193,12 @@ def update_dynamic_title(clickData):
     Output('dual-axis-bar-chart', 'figure'),
     [Input('year-dropdown', 'value'),
      Input('quarter-dropdown', 'value'),
-     Input('order-dropdown', 'value')]
+     Input('order-dropdown', 'value'),
+     Input('top-issues-dropdown', 'value')]
 )
 
 
-def update_dual_axis_bar_chart(selected_years, selected_quarters, selected_order):
+def update_dual_axis_bar_chart(selected_years, selected_quarters, selected_order, top_n):
     # Filter the data based on the selected years and quarters
     filtered_frequency = df_frequency
     filtered_expenses = df_expenses
@@ -211,14 +223,18 @@ def update_dual_axis_bar_chart(selected_years, selected_quarters, selected_order
         .sum()
         .reset_index(name='Total Expenses')
     )
-    agg_expenses['Total Expenses'] = agg_expenses['Total Expenses'] / 1_000_000  # Convert to millions
 
     # Merge the frequency and expenses data for plotting
     merged_data = pd.merge(agg_frequency, agg_expenses, on='issue_name', how='outer').fillna(0)
 
-    # Sort by Total Frequency in descending order
-    if selected_order:
-        merged_data = merged_data.sort_values(by=f'{selected_order}', ascending=False)
+    # Sort the data dynamically based on user selection
+    if selected_order and top_n:
+        # Ensure selected_order is valid
+        if selected_order in ["Total Frequency", "Total Expenses"]:
+            merged_data = merged_data.sort_values(by=selected_order, ascending=False)
+
+        # Limit to top N firms after sorting
+        merged_data = merged_data.head(top_n)
 
     # Create the bar chart with two traces (Frequency and Expenses)
     fig = go.Figure()
