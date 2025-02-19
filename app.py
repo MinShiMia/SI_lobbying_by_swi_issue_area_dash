@@ -36,8 +36,8 @@ def load_csv_from_github(url):
 
 
 # URLs for CSV files
-df_frequency_url = "https://raw.githubusercontent.com/MinShiMia/SI_lobbying_by_swi_issue_area_dash/main/lda_frequency_by_SWI_issue_area_over_time.csv"
-df_expenses_url = "https://raw.githubusercontent.com/MinShiMia/SI_lobbying_by_swi_issue_area_dash/main/lda_quarterly_total_lobbying_expenses_by_SWI_issue_area_over_time.csv"
+df_frequency_url = "https://raw.githubusercontent.com/MinShiMia/SI_lobbying_by_swi_issue_area_dash/main/data/lda_frequency_by_SWI_issue_area_over_time.csv"
+df_expenses_url = "https://raw.githubusercontent.com/MinShiMia/SI_lobbying_by_swi_issue_area_dash/main/data/lda_quarterly_total_lobbying_expenses_by_SWI_issue_area_over_time.csv"
 
 # Load the data
 df_frequency = load_csv_from_github(df_frequency_url)
