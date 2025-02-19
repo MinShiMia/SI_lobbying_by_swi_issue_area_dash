@@ -14,6 +14,7 @@ attrs~=25.1.0
 protobuf~=5.29.3
 filelock~=3.17.0
 Flask~=3.0.3
+gunicorn==23.0.0
 importlib_metadata~=8.6.1
 typing_extensions~=4.12.2
 nest-asyncio~=1.6.0
